@@ -8,12 +8,13 @@ from composer.core import Callback, Event, State, Time
 from composer.loggers import Logger
 from composer.models import HuggingFaceModel
 from composer.utils import dist
-from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
 from composer.callbacks.checkpoint_saver import checkpoint_periodically
 
 from torch.utils.data import TensorDataset, DataLoader
 
-Tokenizer = Union[PreTrainedTokenizer, PreTrainedTokenizerFast]
+from composer.utils.import_helpers import MissingConditionalImportError
+
+
 
 class Generate(Callback):
 
@@ -35,10 +36,9 @@ class Generate(Callback):
         self.save_interval = checkpoint_periodically(interval, save_end_of_training=False)
 
     def init(self, state: State, logger: Logger):
-        assert isinstance(state.model, HuggingFaceModel)
+        assert isinstance(state.model, HuggingFaceModel), f'Expected HuggingFaceModel got {state.model.__class__}'
 
     def run_event(self, event: Event, state: State, logger: Logger) -> None:
-        
         if state.get_elapsed_duration() is not None and self.save_interval(state, event): 
             self.generate(state, logger)
         else:
@@ -49,7 +49,15 @@ class Generate(Callback):
         assert isinstance(model, HuggingFaceModel) # TODO: Extend to support any models that have a generate method.
 
         tokenizer = state.model.tokenizer
-        assert isinstance(tokenizer, Tokenizer)
+
+        try: 
+            from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
+        except ImportError as e: 
+            raise MissingConditionalImportError(extra_deps_group='nlp', 
+                                                conda_package='transformers', 
+                                                conda_channel='conda-forge') from e 
+        
+        assert isinstance(tokenizer, Union[PreTrainedTokenizer, PreTrainedTokenizerFast])
 
         # Set to evaluation mode and stash the original mode.
         original_mode = model.training
