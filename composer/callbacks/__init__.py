@@ -19,6 +19,7 @@ from composer.callbacks.optimizer_monitor import OptimizerMonitor
 from composer.callbacks.runtime_estimator import RuntimeEstimator
 from composer.callbacks.speed_monitor import SpeedMonitor
 from composer.callbacks.threshold_stopper import ThresholdStopper
+from composer.callbacks.generate import Generate
 
 __all__ = [
     'ActivationMonitor',
@@ -34,4 +35,5 @@ __all__ = [
     'ImageVisualizer',
     'HealthChecker',
     'RuntimeEstimator',
+    'Generate'
 ]

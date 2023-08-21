@@ -9,7 +9,7 @@ from composer.loggers import Logger
 from composer.models import HuggingFaceModel
 from composer.utils import dist
 from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
-from composer.callbacks import checkpoint_periodically
+from composer.callbacks.checkpoint_saver import checkpoint_periodically
 
 from torch.utils.data import TensorDataset, DataLoader
 
@@ -19,23 +19,12 @@ class Generate(Callback):
 
     def __init__(self, prompts: List[str], interval: Union[str, int, Time], batch_size: int,
                  **kwargs: Any):
-        """Periodically log generations to wandb from a set of prompts.
-
-        In the main view for a run, there will be a table that will show the _last_ logged generations.
-        To compare previous iterations of the generations, you need to
-        1. Click on the run
-        2. Click on "artifacts" in the menu on the left side of the screen
-        3. Click on one of the artifacts called "predictions"
-        4. Click on the "files" tab
-        5. Click on "predictions.table.json"
-        6. On the left hand side, there are different versions of the table produced throughout training. Select one of these.
-        7. Now, when you hover over other versions, there will be a "compare" button, which will allow you to compare the currently
-            selected version to the version you add via compare.
+        """Periodically log generations.
 
         Args:
             prompts (List[str]): The list of prompts you would like to produce generations for
             interval (Union[str, int, :class:`.Time`]): The interval describing how often checkpoints should be
-                saved. If an integer, it will be assumed to be in :attr:`.TimeUnit.EPOCH`\s.
+                saved. If an integer, it will be assumed to be in :attr:`.TimeUnit.EPOCH`.
                 Otherwise, the unit must be either :attr:`.TimeUnit.EPOCH`, :attr:`.TimeUnit.BATCH`,
                 :attr:`.TimeUnit.TOKEN`, or :attr:`.TimeUnit.SAMPLE`.
             kwargs: All kwargs well be passed along to the call to generate. This is for things like `do_sample`, `top_p`, etc
@@ -43,13 +32,14 @@ class Generate(Callback):
         self.prompts = prompts
         self.generate_kwargs = kwargs
         self.batch_size = batch_size
-        self.save_interval = checkpoint_periodically(interval)
+        self.save_interval = checkpoint_periodically(interval, save_end_of_training=False)
 
     def init(self, state: State, logger: Logger):
         assert isinstance(state.model, HuggingFaceModel)
 
     def run_event(self, event: Event, state: State, logger: Logger) -> None:
-        if self.save_interval(state, event): 
+        
+        if state.get_elapsed_duration() is not None and self.save_interval(state, event): 
             self.generate(state, logger)
         else:
             super().run_event(event, state, logger)
@@ -90,7 +80,7 @@ class Generate(Callback):
             output_token_ids.extend(model.generate(  # type: ignore
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                synced_gpus=True,
+                synced_gpus=dist.get_world_size() > 1,
                 **self.generate_kwargs,
             ))
 
