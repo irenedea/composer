@@ -10,8 +10,8 @@ import composer.callbacks
 import composer.loggers
 import composer.profiler
 from composer import Callback
-from composer.callbacks import (EarlyStopper, ExportForInferenceCallback, HealthChecker, ImageVisualizer, MemoryMonitor,
-                                MLPerfCallback, SpeedMonitor, ThresholdStopper)
+from composer.callbacks import (EarlyStopper, ExportForInferenceCallback, Generate, HealthChecker, ImageVisualizer,
+                                MemoryMonitor, MLPerfCallback, SpeedMonitor, ThresholdStopper)
 from composer.loggers import (CometMLLogger, ConsoleLogger, LoggerDestination, MLFlowLogger, ProgressBarLogger,
                               RemoteUploaderDownloader, TensorboardLogger, WandBLogger)
 from tests.common import get_module_subclasses
@@ -63,6 +63,12 @@ except ImportError:
     _LIBCLOUD_INSTALLED = False
 
 _callback_kwargs: Dict[Type[Callback], Dict[str, Any],] = {
+    Generate: {
+        'prompts': ['a', 'b', 'c'],
+        'interval': '1ba',
+        'batch_size': 2,
+        'max_length': 20
+    },
     RemoteUploaderDownloader: {
         'bucket_uri': 'libcloud://.',
         'backend_kwargs': {
@@ -98,6 +104,7 @@ _callback_kwargs: Dict[Type[Callback], Dict[str, Any],] = {
 }
 
 _callback_marks: Dict[Type[Callback], List[pytest.MarkDecorator],] = {
+    Generate: [pytest.mark.skip(reason='Generate requires HuggingFaceModel.')],
     RemoteUploaderDownloader: [
         pytest.mark.filterwarnings(
             # post_close might not be called if being used outside of the trainer
