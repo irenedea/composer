@@ -43,7 +43,7 @@ def test_generate_callback(device, world_size, use_fsdp):
 
     cb_batch_size = 2
     interval_batch = 2
-    generate_cb = Generate(prompts, interval=f'{interval_batch}ba', batch_size=cb_batch_size, max_length=20)
+    generate_cb = Generate(prompts, interval=f'{interval_batch}ba', batch_size=cb_batch_size, max_length=5)
     generate_cb.generate = Mock(wraps=generate_cb.generate)
 
     n_batches = 6

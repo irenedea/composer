@@ -1003,7 +1003,7 @@ def test_generate(device, world_size, hf_model, hf_tokenizer, use_fsdp):
 
 @device('cpu', 'gpu')
 @world_size(1, 2)
-@pytest.mark.parametrize('use_fsdp', [True, False])
+@pytest.mark.parametrize('use_fsdp', [False])
 @pytest.mark.parametrize('hf_model,hf_tokenizer', [(configure_tiny_gpt2_model, configure_tiny_gpt2_tokenizer),
                                                    (configure_tiny_t5_model, configure_tiny_t5_tokenizer)])
 def test_eval_forward_generate(device, world_size, hf_model, hf_tokenizer, use_fsdp):

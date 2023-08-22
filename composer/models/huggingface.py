@@ -524,7 +524,9 @@ class HuggingFaceModel(ComposerModel):
         # See https://github.com/huggingface/accelerate/issues/570, https://github.com/huggingface/accelerate/issues/947,
         # and https://github.com/pytorch/pytorch/issues/82461, https://github.com/pytorch/pytorch/issues/100069 for more info
         # Note: This is a solution for Torch 1.13.x, and there is a different solution below for Torch 2.0
+        print('generate', is_model_fsdp(self.model), self.dummy_forward_called, using_torch_2())
         if not using_torch_2() and not self.dummy_forward_called and is_model_fsdp(self.model):
+            print('dummy forward!')
             with torch.no_grad():
                 maybe_decoder_input_ids = {}
                 if self.model.config.is_encoder_decoder:
