@@ -76,9 +76,6 @@ class Generate(Callback):
             tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenized_input = tokenizer(self.prompts, return_tensors='pt', padding=True)
 
-        for k, v in tokenized_input.items():
-            tokenized_input[k] = device.tensor_to_device(v)
-
         all_input_ids = tokenized_input['input_ids']
         all_attn_masks = tokenized_input['attention_mask']
 
@@ -86,7 +83,7 @@ class Generate(Callback):
 
         output_token_ids = []
         # dummy forward call needed for FSDP to work consistently
-        model.dummy_forward_called = False  #
+        # model.dummy_forward_called = False  #
 
         for input_ids, attn_mask in batches:
             # Move batch to device.

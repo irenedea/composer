@@ -358,6 +358,8 @@ class HuggingFaceModel(ComposerModel):
 
     def forward(self, batch):
         if isinstance(batch, Mapping):
+            if torch.is_grad_enabled():
+                self.dummy_forward_called = False
             # Further input validation is left to the huggingface forward call
             batch = {k: v for k, v in batch.items() if k in self.model_forward_args}
             output = self.model(**batch)  # type: ignore (thirdparty)
