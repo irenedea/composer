@@ -943,6 +943,19 @@ class State(Serializable):
                 serialized_value = attribute_value
 
             if serialized_value is not None:
+                # print('attribute_name and value', attribute_name, type(serialized_value))
+                # if isinstance(serialized_value, dict):
+                #     print(serialized_value.keys(), [type(x) for x in serialized_value.values()])
+                found_types = set()
+                def recursive_types(value: Any):
+                    if isinstance(value, dict):
+                        for child_value in value.values():
+                            recursive_types(child_value)
+                    else:
+                        found_types.add(type(value))
+                recursive_types(serialized_value)
+                print('found types', attribute_name, found_types)
+
                 state_dict[attribute_name] = serialized_value
 
         state_dict['integrations'] = self._get_integrations_state_dict()
