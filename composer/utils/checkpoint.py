@@ -716,6 +716,7 @@ def safe_torch_load(
 
             return state_dict
         else:
+            print('torch WEIGHTS ONLY!!!!', composer_states_filepath)
             return torch.load(composer_states_filepath, map_location=map_location, weights_only=True)
     except TypeError as e:
         if 'Accuracy.__new__() missing 1 required positional argument' in str(e):
