@@ -695,7 +695,7 @@ def safe_torch_load(
             model = None
             optimizer = None
             if dist.get_global_rank() == 0:
-                state_dict_list[0] = torch.load(composer_states_filepath, map_location=map_location)
+                state_dict_list[0] = torch.load(composer_states_filepath, map_location=map_location, weights_only=True)
                 # Don't broadcast model/optimizer state if they exist
                 if 'model' in state_dict_list[0]['state']:
                     model = state_dict_list[0]['state']['model']
