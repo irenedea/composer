@@ -6,11 +6,12 @@
 import math
 import socket
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Callable, Optional, Set, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Set, Type, Union
 
 import torch
 from packaging import version
 from torch.nn.parallel import DistributedDataParallel
+import numpy as np
 
 if TYPE_CHECKING:
     from composer.core import Event, State, Time
@@ -24,6 +25,23 @@ __all__ = [
     'model_eval_mode',
     'create_interval_scheduler',
 ]
+
+
+def recursive_types(start_value: Any) -> set:
+    found_types = set()
+    def recursive_types(value: Any):
+        if isinstance(value, torch.Tensor) or isinstance(value, np.ndarray):
+            found_types.add(type(value))
+        elif isinstance(value, dict):
+            for child_value in value.values():
+                recursive_types(child_value)
+        elif isinstance(value, list) or isinstance(value, tuple):
+            for child_value in value:
+                recursive_types(child_value)
+        else:
+            found_types.add(type(value))
+    recursive_types(start_value)
+    return found_types
 
 
 def create_interval_scheduler(interval: Union[str, int, 'Time'],

@@ -28,7 +28,7 @@ from composer.core.serializable import Serializable
 from composer.core.time import Time, Timestamp, TimeUnit
 from composer.devices import Device
 from composer.utils import batch_get, batch_set, dist, ensure_tuple, get_composer_env_dict, is_model_deepspeed
-from composer.utils.misc import using_torch_2
+from composer.utils.misc import recursive_types, using_torch_2
 
 if TYPE_CHECKING:
     import deepspeed
@@ -823,7 +823,7 @@ class State(Serializable):
         """
         metadata_dict = {}
         metadata_dict['composer_env_info'] = get_composer_env_dict()
-        metadata_dict['torch_version'] = torch.__version__
+        metadata_dict['torch_version'] = str(torch.__version__)
         metadata_dict['device'] = self.device.name
         metadata_dict['precision'] = self.precision.value
         metadata_dict['world_size'] = dist.get_world_size()
@@ -943,23 +943,27 @@ class State(Serializable):
                 serialized_value = attribute_value
 
             if serialized_value is not None:
-                # print('attribute_name and value', attribute_name, type(serialized_value))
-                # if isinstance(serialized_value, dict):
-                #     print(serialized_value.keys(), [type(x) for x in serialized_value.values()])
-                found_types = set()
-                def recursive_types(value: Any):
-                    if isinstance(value, dict):
-                        for child_value in value.values():
-                            recursive_types(child_value)
-                    else:
-                        found_types.add(type(value))
-                recursive_types(serialized_value)
-                print('found types', attribute_name, found_types)
+                print(attribute_name, recursive_types(serialized_value))
 
                 state_dict[attribute_name] = serialized_value
 
+
         state_dict['integrations'] = self._get_integrations_state_dict()
         state_dict['metadata'] = self._get_state_metadata()
+
+        print('metadata', recursive_types(state_dict['metadata']))
+        print('integrations', recursive_types(state_dict['integrations']))
+
+
+        # found_types = set()
+        # def recursive_types(value: Any):
+        #     if isinstance(value, dict):
+        #         for child_value in value.values():
+        #             recursive_types(child_value)
+        #     else:
+        #         found_types.add(type(value))
+        # recursive_types(state_dict)
+        # print('found types', attribute_name, found_types)
 
         return state_dict
 

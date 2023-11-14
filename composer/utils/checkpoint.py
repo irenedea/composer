@@ -23,7 +23,7 @@ from packaging import version
 from composer.utils import dist, reproducibility
 from composer.utils.file_helpers import (FORMAT_NAME_WITH_DIST_AND_TIME_TABLE, format_name_with_dist,
                                          format_name_with_dist_and_time, get_file, is_tar)
-from composer.utils.misc import is_model_deepspeed, using_torch_2
+from composer.utils.misc import is_model_deepspeed, recursive_types, using_torch_2
 from composer.utils.object_store import ObjectStore
 
 if TYPE_CHECKING:
@@ -718,7 +718,7 @@ def safe_torch_load(
         else:
             
             print('torch WEIGHTS ONLY!!!!', composer_states_filepath)
-            return torch.load(composer_states_filepath, map_location=map_location, weights_only=True)
+            return torch.load(composer_states_filepath, map_location=map_location)
     except TypeError as e:
         if 'Accuracy.__new__() missing 1 required positional argument' in str(e):
             raise Exception('As of v0.10.0, torchmetrics introduces a new required argument to Accuracy which '
@@ -746,6 +746,16 @@ def _restore_checkpoint(
         composer_states_filepath=composer_states_filepath,
         load_fsdp_monolith_rank0_only=state.load_fsdp_monolith_rank0_only,
     )
+
+    found_types = set()
+    def recursive_types(value: Any):
+        if isinstance(value, dict):
+            for child_value in value.values():
+                recursive_types(child_value)
+        else:
+            found_types.add(type(value))
+    recursive_types(state_dict)
+    print('found types state dict load!', found_types)
     if ignore_keys:
         # Filter provided list of key paths
         if not callable(ignore_keys):
@@ -874,6 +884,8 @@ def save_checkpoint(
         log_msg = f'Saving sharded checkpoints to {save_filename}...' if state.fsdp_sharded_state_dict_enabled else f'Saving monolithic checkpoint to {save_filename}'
         with open(save_filename, 'wb') as f:
             log.debug(log_msg)
+            for key in state_dict.keys():
+                print('found types right before saving', key, recursive_types(state_dict[key]))
             torch.save(state_dict, f)
 
         log.debug(f'Global rank 0 done saving checkpoint to disk at {save_filename}.')

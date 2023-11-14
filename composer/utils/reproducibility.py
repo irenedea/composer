@@ -164,6 +164,11 @@ def seed_all(seed: int):
     # to make sure it gets called at least once
     torch.cuda.manual_seed_all(seed)
 
+def replace_with_tensor(t: tuple):
+    return tuple(torch.from_numpy(x.astype(np.int32)) if isinstance(x, np.ndarray) else x for x in t)
+
+def replace_with_numpy(t: tuple):
+    return tuple(x.numpy().astype(np.uint32) if isinstance(x, torch.Tensor) else x for x in t)
 
 def get_rng_state() -> List[Dict[str, Any]]:
     """The state of the RNG objects.
@@ -173,7 +178,7 @@ def get_rng_state() -> List[Dict[str, Any]]:
     """
     rng_state = {
         'python': random.getstate(),
-        'numpy': np.random.get_state(),
+        'numpy': replace_with_tensor(np.random.get_state()),
         'torch': torch.random.get_rng_state(),
     }
     if torch.cuda.is_available() and torch.cuda.is_initialized():
@@ -207,7 +212,7 @@ def load_rng_state(rng_state_dicts: List[Dict[str, Any]]):
         rng_state_dict = rng_state_dicts[dist.get_global_rank()]
         torch.set_rng_state(rng_state_dict['torch'])
         random.setstate(rng_state_dict['python'])
-        np.random.set_state(rng_state_dict['numpy'])
+        np.random.set_state(replace_with_numpy(rng_state_dict['numpy']))
 
         is_cuda_available = torch.cuda.is_available() and torch.cuda.is_initialized()
         has_cuda_rng_state = 'cuda' in rng_state_dict
