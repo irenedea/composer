@@ -912,7 +912,9 @@ class Trainer:
         algorithms = list(ensure_tuple(algorithms))
 
         # Device
+        print('DEVICE str', device)
         device = get_device(device)
+        print('GET DEVICE', device)
 
         # Precision
         if precision is None:
