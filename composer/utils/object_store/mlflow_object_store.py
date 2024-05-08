@@ -115,7 +115,7 @@ class MLFlowObjectStore(ObjectStore):
             be uploaded is `10 000 * multipart_upload_chunk_size`. Defaults to 100MB for a max upload size of 1TB.
     """
 
-    def __init__(self, path: str, multipart_upload_chunk_size: int = 100 * 1024 * 1024) -> None:
+    def __init__(self, path: str, multipart_upload_chunk_size: int = 15 * 1024 * 1024 * 1024) -> None:
         try:
             import mlflow
             from mlflow import MlflowClient
@@ -152,6 +152,8 @@ class MLFlowObjectStore(ObjectStore):
         mlflow.environment_variables.MLFLOW_MULTIPART_UPLOAD_CHUNK_SIZE.set(  # pyright: ignore[reportGeneralTypeIssues]
             multipart_upload_chunk_size,
         )
+
+        print('Set chunk size to ', multipart_upload_chunk_size)
 
         experiment_id, run_id, _ = MLFlowObjectStore.parse_dbfs_path(path)
         if experiment_id == MLFLOW_EXPERIMENT_ID_PLACEHOLDER:
