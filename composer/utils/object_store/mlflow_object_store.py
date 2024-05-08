@@ -115,7 +115,7 @@ class MLFlowObjectStore(ObjectStore):
             be uploaded is `10 000 * multipart_upload_chunk_size`. Defaults to 100MB for a max upload size of 1TB.
     """
 
-    def __init__(self, path: str, multipart_upload_chunk_size: int = 15 * 1024 * 1024 * 1024) -> None:
+    def __init__(self, path: str, multipart_upload_chunk_size: int = 20 * 1024 * 1024 * 1024) -> None:
         try:
             import mlflow
             from mlflow import MlflowClient
