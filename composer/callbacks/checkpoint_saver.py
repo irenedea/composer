@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import gc
 import logging
 import os
 import pathlib
@@ -14,6 +15,8 @@ import textwrap
 import time
 from pathlib import Path
 from typing import Any, Callable, Optional, Union
+
+import torch
 
 from composer.core import Callback, Event, State, Time, Timestamp
 from composer.loggers import Logger, MLFlowLogger, MosaicMLLogger
@@ -459,6 +462,10 @@ class CheckpointSaver(Callback):  # noqa: D101
             )
 
     def _save_checkpoint(self, state: State, logger: Logger):
+        # gc_cuda()
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         self.last_checkpoint_batch = state.timestamp.batch
 
         is_deepspeed = is_model_deepspeed(state.model)
